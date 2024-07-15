@@ -8,29 +8,21 @@ class ParseInternalException private constructor() : RuntimeException(null, null
     }
 }
 
-class ParseException(
-    private val msg: String, private val input: String? = null, private val index: Int? = null,
-) : RuntimeException() {
-    override val message: String
-        get() = if (rowAndCol == null) msg else "at (${rowAndCol!!.first}, ${rowAndCol!!.second}), msg: $msg"
-
-    private val rowAndCol: Pair<Int, Int>?
-        get() {
-            if (input == null || index == null) return null
-
-            var row = 1
-            var col = 0
-            var i = 0
-            while (i <= index && index < input.length) {
-                if (input[i] == '\n') {
-                    row++
-                    col = 0
-                }
-                col++
-                i++
+class ParseException(msg: String, input: String? = null, index: Int? = null) : RuntimeException() {
+    override val message = if (input == null || index == null) msg else {
+        var row = 1
+        var col = 0
+        var i = 0
+        while (i <= index && index < input.length) {
+            if (input[i] == '\n') {
+                row++
+                col = 0
             }
-            return Pair(row, col)
+            col++
+            i++
         }
+        "$col,$row: $msg"
+    }
 }
 
 data class ParseResult<R>(val result: R, val index: Int)
