@@ -2,9 +2,9 @@ package org.example.kparserc.utils
 
 import org.example.kparserc.Parser
 
-class ParseInternalException private constructor() : RuntimeException(null, null, false, false) {
+class InternalException private constructor() : RuntimeException(null, null, false, false) {
     companion object {
-        val INSTANCE = ParseInternalException()
+        val INSTANCE = InternalException()
     }
 }
 
@@ -25,10 +25,10 @@ class ParseException(msg: String, input: String? = null, index: Int? = null) : R
     }
 }
 
-data class ParseResult<R>(val result: R, val index: Int)
+data class ParseResult<out R>(val result: R, val index: Int)
 
-fun ch(predicate: (Char) -> Boolean): Parser<Char> = Parser { s, index ->
-    if (index >= s.length || !predicate(s[index])) throw ParseInternalException.INSTANCE
+inline fun ch(crossinline predicate: (Char) -> Boolean): Parser<Char> = Parser { s, index ->
+    if (index >= s.length || !predicate(s[index])) throw InternalException.INSTANCE
     ParseResult(s[index], index + 1)
 }
 
@@ -47,16 +47,16 @@ fun not(vararg chs: Char): Parser<Char> = ch { c ->
 }
 
 fun str(str: String): Parser<String> = Parser { s, index ->
-    if (!s.startsWith(str, index)) throw ParseInternalException.INSTANCE
+    if (!s.startsWith(str, index)) throw InternalException.INSTANCE
     ParseResult(str, index + str.length)
 }
 
 fun strs(vararg strs: String): Parser<String> = Parser { s, index ->
     for (str in strs) try {
         return@Parser str(str).parse(s, index)
-    } catch (_: ParseInternalException) {
+    } catch (_: InternalException) {
     }
-    throw ParseInternalException.INSTANCE
+    throw InternalException.INSTANCE
 }
 
 fun seq(vararg parsers: Parser<out Any>): Parser<List<Any>> = Parser { s, index ->
@@ -69,17 +69,15 @@ fun seq(vararg parsers: Parser<out Any>): Parser<List<Any>> = Parser { s, index 
     ParseResult(result, currIndex)
 }
 
-@SafeVarargs
-@Suppress("UNCHECKED_CAST")
 fun <R> oneOf(vararg parsers: Parser<out R>): Parser<R> = Parser { s, index ->
     for (parser in parsers) try {
-        return@Parser parser.parse(s, index) as ParseResult<R>
-    } catch (_: ParseInternalException) {
+        return@Parser parser.parse(s, index)
+    } catch (_: InternalException) {
     }
-    throw ParseInternalException.INSTANCE
+    throw InternalException.INSTANCE
 }
 
-fun <R> lazy(parserSupplier: () -> Parser<R>): Parser<R> = Parser { s, index ->
+inline fun <R> lazy(crossinline parserSupplier: () -> Parser<R>): Parser<R> = Parser { s, index ->
     parserSupplier().parse(s, index)
 }
 
@@ -91,10 +89,10 @@ fun expect(test: Parser<out Any>): Parser<Boolean> = Parser { s, index ->
 fun not(test: Parser<out Any>): Parser<Boolean> = Parser { s, index ->
     try {
         test.parse(s, index)
-    } catch (_: ParseInternalException) {
+    } catch (_: InternalException) {
         return@Parser ParseResult(true, index)
     }
-    throw ParseInternalException.INSTANCE
+    throw InternalException.INSTANCE
 }
 
 class SkipWrapper<R>(private val lhs: Parser<R>) {

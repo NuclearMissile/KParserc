@@ -8,9 +8,7 @@ fun interface Parser<R> {
 
     fun parse(s: String): R {
         val r = parse(s, 0)
-        if (r.index != s.length) {
-            throw ParseInternalException.INSTANCE
-        }
+        if (r.index != s.length) throw InternalException.INSTANCE
         return r.result
     }
 
@@ -27,7 +25,7 @@ fun interface Parser<R> {
     fun or(rhs: Parser<R>): Parser<R> = Parser { s, index ->
         try {
             parse(s, index)
-        } catch (_: ParseInternalException) {
+        } catch (_: InternalException) {
             rhs.parse(s, index)
         }
     }
@@ -58,7 +56,7 @@ fun interface Parser<R> {
                 result += r.result
                 currIndex = r.index
                 count++
-            } catch (_: ParseInternalException) {
+            } catch (_: InternalException) {
                 break
             }
         }
@@ -72,7 +70,7 @@ fun interface Parser<R> {
 
     fun <R2> skip(rhs: Parser<R2>): Parser<R> = and(rhs).map { p -> p.first }
 
-    fun surround(prefix: Parser<*>, suffix: Parser<*>? = null): Parser<R> =
+    fun surround(prefix: Parser<out Any>, suffix: Parser<out Any>? = null): Parser<R> =
         org.example.kparserc.utils.skip(prefix).and(this).skip(suffix ?: prefix)
 
     fun trim(): Parser<R> = surround(chs(' ', '\t', '\r', '\n').many0())
@@ -80,7 +78,7 @@ fun interface Parser<R> {
     fun optional(default: R): Parser<R> = Parser { s, index ->
         try {
             parse(s, index)
-        } catch (_: ParseInternalException) {
+        } catch (_: InternalException) {
             ParseResult(default, index)
         }
     }
@@ -94,7 +92,7 @@ fun interface Parser<R> {
     fun fetal(exceptionMapper: (String, Int) -> RuntimeException): Parser<R> = Parser { s, index ->
         try {
             parse(s, index)
-        } catch (_: ParseInternalException) {
+        } catch (_: InternalException) {
             throw exceptionMapper(s, index)
         }
     }
