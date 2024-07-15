@@ -1,5 +1,7 @@
 package org.example.kparserc
 
+import org.example.kparserc.utils.*
+
 fun interface Parser<R> {
 
     fun parse(s: String, index: Int): ParseResult<R>
@@ -13,14 +15,14 @@ fun interface Parser<R> {
     }
 
     fun <R2> and(rhs: Parser<R2>): Parser<Pair<R, R2>> = Parser { s, index ->
-        val r1 = this.parse(s, index)
+        val r1 = parse(s, index)
         val r2 = rhs.parse(s, r1.index)
         ParseResult(Pair(r1.result, r2.result), r2.index)
     }
 
-    fun and(c: Char): Parser<Pair<R, Char>> = and(Parsers.ch(c))
+    fun and(c: Char): Parser<Pair<R, Char>> = and(ch(c))
 
-    fun and(s: String): Parser<Pair<R, String>> = and(Parsers.str(s))
+    fun and(s: String): Parser<Pair<R, String>> = and(str(s))
 
     fun or(rhs: Parser<R>): Parser<R> = Parser { s, index ->
         try {
@@ -71,9 +73,9 @@ fun interface Parser<R> {
     fun <R2> skip(rhs: Parser<R2>): Parser<R> = and(rhs).map { p -> p.first }
 
     fun surround(prefix: Parser<*>, suffix: Parser<*>? = null): Parser<R> =
-        Parsers.skip(prefix).and(this).skip(suffix ?: prefix)
+        org.example.kparserc.utils.skip(prefix).and(this).skip(suffix ?: prefix)
 
-    fun trim(): Parser<R> = surround(Parsers.chs(' ', '\t', '\r', '\n').many0())
+    fun trim(): Parser<R> = surround(chs(' ', '\t', '\r', '\n').many0())
 
     fun optional(default: R): Parser<R> = Parser { s, index ->
         try {
@@ -96,6 +98,4 @@ fun interface Parser<R> {
             throw exceptionMapper(s, index)
         }
     }
-
-    fun fetal(exceptionSupplier: () -> RuntimeException): Parser<R> = fetal { _, _ -> exceptionSupplier() }
 }
