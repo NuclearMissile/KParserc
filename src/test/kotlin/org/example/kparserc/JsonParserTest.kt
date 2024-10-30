@@ -7,69 +7,67 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class JsonParser {
-    companion object {
-        private val objStart = Ch('{').trim()
-        private val objEnd = Ch('}').trim()
-        private val arrStart = Ch('[').trim()
-        private val arrEnd = Ch(']').trim()
-        private val colon = Ch(':').trim()
-        private val comma = Ch(',').trim()
-        private val jsonObj = OneOf(
-            Lazy { decimal },
-            Lazy { integer },
-            Lazy { string },
-            Lazy { boolean },
-            Lazy { _null },
-            Lazy { arr },
-            Lazy { obj },
-        )
+object JsonParser {
+    private val objStart = Ch('{').trim()
+    private val objEnd = Ch('}').trim()
+    private val arrStart = Ch('[').trim()
+    private val arrEnd = Ch(']').trim()
+    private val colon = Ch(':').trim()
+    private val comma = Ch(',').trim()
+    private val jsonObj = OneOf(
+        Lazy { decimal },
+        Lazy { integer },
+        Lazy { string },
+        Lazy { boolean },
+        Lazy { _null },
+        Lazy { arr },
+        Lazy { obj },
+    )
 
-        private val integer = Match("[+\\-]?\\d+").map { it.toInt() }.trim()
-        private val decimal = Match("[+\\-]?\\d*\\.\\d+([eE][+-]?[0-9]+)?").map { it.toDouble() }.trim()
-        private val string = Match("\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"").map { s ->
-            val sb = StringBuilder()
-            var currIndex = 1
-            while (s[currIndex] != '"') {
-                val char = s[currIndex++]
-                if (char == '\\') {
-                    when (val escape = s[currIndex++]) {
-                        '"' -> sb.append('"')
-                        '\\' -> sb.append('\\')
-                        '/' -> sb.append('/')
-                        'b' -> sb.append('\b')
-                        'f' -> sb.append('\u000C')
-                        'n' -> sb.append('\n')
-                        'r' -> sb.append('\r')
-                        't' -> sb.append('\t')
-                        'u' -> {
-                            val unicode = s.substring(currIndex..currIndex + 3)
-                            currIndex += 4
-                            sb.append(Integer.parseInt(unicode, 16).toChar())
-                        }
-
-                        else -> throw ParseException("Invalid escape character: $escape")
+    private val integer = Match("[+\\-]?\\d+").map { it.toInt() }.trim()
+    private val decimal = Match("[+\\-]?\\d*\\.\\d+([eE][+-]?[0-9]+)?").map { it.toDouble() }.trim()
+    private val string = Match("\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"").map { s ->
+        val sb = StringBuilder()
+        var currIndex = 1
+        while (s[currIndex] != '"') {
+            val char = s[currIndex++]
+            if (char == '\\') {
+                when (val escape = s[currIndex++]) {
+                    '"' -> sb.append('"')
+                    '\\' -> sb.append('\\')
+                    '/' -> sb.append('/')
+                    'b' -> sb.append('\b')
+                    'f' -> sb.append('\u000C')
+                    'n' -> sb.append('\n')
+                    'r' -> sb.append('\r')
+                    't' -> sb.append('\t')
+                    'u' -> {
+                        val unicode = s.substring(currIndex..currIndex + 3)
+                        currIndex += 4
+                        sb.append(Integer.parseInt(unicode, 16).toChar())
                     }
-                } else {
-                    sb.append(char)
+
+                    else -> throw ParseException("Invalid escape character: $escape")
                 }
+            } else {
+                sb.append(char)
             }
-            sb.toString()
-        }.trim()
-        private val boolean = Strs("true", "false").map { it.toBoolean() }.trim()
-        private val _null = Str("null").map { null }.trim()
-        private val objList = jsonObj.and(Skip(comma).and(jsonObj).many0()).map(::reduceList)
-        private val arr: Parser<List<Any?>> = Skip(arrStart).and(objList.opt(emptyList())).skip(arrEnd)
-        private val pair = string.skip(colon).and(jsonObj)
-        private val pairList = pair.and(Skip(comma).and(pair).many0()).map(::reduceList)
-        private val obj: Parser<Map<String, Any?>> =
-            Skip(objStart).and(pairList.opt(emptyList())).skip(objEnd).map { it.toMap() }
+        }
+        sb.toString()
+    }.trim()
+    private val boolean = Strs("true", "false").map { it.toBoolean() }.trim()
+    private val _null = Str("null").map { null }.trim()
+    private val objList = jsonObj.and(Skip(comma).and(jsonObj).many0()).map(::reduceList)
+    private val arr: Parser<List<Any?>> = Skip(arrStart).and(objList.opt(emptyList())).skip(arrEnd)
+    private val pair = string.skip(colon).and(jsonObj)
+    private val pairList = pair.and(Skip(comma).and(pair).many0()).map(::reduceList)
+    private val obj: Parser<Map<String, Any?>> =
+        Skip(objStart).and(pairList.opt(emptyList())).skip(objEnd).map { it.toMap() }
 
-        private inline fun <reified T> reduceList(p: Pair<T, List<T>>): List<T> =
-            listOf(p.first, *p.second.toTypedArray())
+    private inline fun <reified T> reduceList(p: Pair<T, List<T>>): List<T> =
+        listOf(p.first, *p.second.toTypedArray())
 
-        fun parse(s: String) = jsonObj.end().eval(s)
-    }
+    fun parse(s: String) = jsonObj.end().eval(s)
 }
 
 class JsonParserTest {

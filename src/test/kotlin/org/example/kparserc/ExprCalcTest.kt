@@ -4,38 +4,36 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ExprCalc {
-    companion object {
-        private val add = Ch('+').trim()
-        private val sub = Ch('-').trim()
-        private val mul = Ch('*').trim()
-        private val div = Ch('/').trim()
-        private val lp = Ch('(').trim()
-        private val rp = Ch(')').trim()
+object ExprCalc {
+    private val add = Ch('+').trim()
+    private val sub = Ch('-').trim()
+    private val mul = Ch('*').trim()
+    private val div = Ch('/').trim()
+    private val lp = Ch('(').trim()
+    private val rp = Ch(')').trim()
 
-        private val integer = Match("\\d+").map { it.toDouble() }
-        private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
-        private val number = decimal.or(integer).trim()
-        private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
-        private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
-        private val fact = OneOf(number, bracketExpr, negFact)
-        private val term = fact.and(mul.or(div).and(fact).many0()).map(Companion::calc)
-        private val expr = term.and(add.or(sub).and(term).many0()).map(Companion::calc)
+    private val integer = Match("\\d+").map { it.toDouble() }
+    private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
+    private val number = decimal.or(integer).trim()
+    private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
+    private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
+    private val fact = OneOf(number, bracketExpr, negFact)
+    private val term = fact.and(mul.or(div).and(fact).many0()).map(::calc)
+    private val expr = term.and(add.or(sub).and(term).many0()).map(::calc)
 
-        private fun calc(p: Pair<Double, List<Pair<Char, Double>>>): Double = p.second.fold(p.first) { acc, pair ->
-            when (pair.first) {
-                '+' -> acc + pair.second
-                '-' -> acc - pair.second
-                '*' -> acc * pair.second
-                '/' -> acc / pair.second
-                else -> throw IllegalArgumentException("Unexpected symbol: ${pair.first}")
-            }
+    private fun calc(p: Pair<Double, List<Pair<Char, Double>>>): Double = p.second.fold(p.first) { acc, pair ->
+        when (pair.first) {
+            '+' -> acc + pair.second
+            '-' -> acc - pair.second
+            '*' -> acc * pair.second
+            '/' -> acc / pair.second
+            else -> throw IllegalArgumentException("Unexpected symbol: ${pair.first}")
         }
-
-        fun eval(s: String) = expr.end()
-            .fatal { input, index -> ParseException("Unexpect character found", input, index) }
-            .eval(s)
     }
+
+    fun eval(s: String) = expr.end()
+        .fatal { input, index -> ParseException("Unexpect character found", input, index) }
+        .eval(s)
 }
 
 class ExprCalcTest {

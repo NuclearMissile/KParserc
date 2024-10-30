@@ -6,55 +6,53 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.text.trim
 
-class XMLParser {
+object XMLParser {
     // Parser combinators for XML
-    companion object {
-        val comment = Skip(Str("<!--")).and(Not(Str("-->")).and(AnyCh()).many0()).skip(Str("-->"))
-        val ignores = Alt(WhiteSpace(), comment).many0()
+    val comment = Skip(Str("<!--")).and(Not(Str("-->")).and(AnyCh()).many0()).skip(Str("-->"))
+    val ignores = Alt(WhiteSpace(), comment).many0()
 
-        val xmlName = Match("[a-zA-Z_][a-zA-Z-_:\\d]*")
-        val attrValue = Match("('[^']+')|(\"[^\"]+\")").map { it.trim('\'', '"') }
-        val attribute = xmlName.trim().skip(Ch('=')).and(attrValue.trim())
-        val attributes = attribute.many0().map {
-            val ret = mutableMapOf<String, String>()
-            for (p in it) {
-                if (ret.containsKey(p.first))
-                    throw ParseException("Attribute key ${p.first} is duplicate.")
-                ret[p.first] = p.second
-            }
-            ret
+    val xmlName = Match("[a-zA-Z_][a-zA-Z-_:\\d]*")
+    val attrValue = Match("('[^']+')|(\"[^\"]+\")").map { it.trim('\'', '"') }
+    val attribute = xmlName.trim().skip(Ch('=')).and(attrValue.trim())
+    val attributes = attribute.many0().map {
+        val ret = mutableMapOf<String, String>()
+        for (p in it) {
+            if (ret.containsKey(p.first))
+                throw ParseException("Attribute key ${p.first} is duplicate.")
+            ret[p.first] = p.second
         }
-        val openingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Ch('>')).surround(ignores)
-        val closingTag = Skip(Str("</")).and(xmlName).skip(Ch('>')).surround(ignores)
-        val selfClosingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Str("/>")).surround(ignores)
-        val textContent =
-            NotChs('<').surround(comment.many0()).many1().map { XMLNode.Text(it.joinToString("").trim()) }
-
-        val xmlElement: Parser<XMLNode.Element> = OneOf(
-            openingTag.flatMap {
-                val name = it.result.first
-                val attrs = it.result.second
-                xmlNode.many0().and(closingTag).map { (content, closeName) ->
-                    if (name != closeName) throw ParseException("Mismatched tags: <$name> and </$closeName>")
-                    XMLNode.Element(name, attrs, content)
-                }
-            }.map { it.second },
-            selfClosingTag.map { XMLNode.Element(it.first, it.second, emptyList()) }
-        )
-
-        val xmlNode: Parser<XMLNode> = OneOf(xmlElement, textContent)
-
-        fun parse(input: String): XMLNode.Element = xmlElement.surround(ignores).end().eval(input)
+        ret
     }
+    val openingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Ch('>')).surround(ignores)
+    val closingTag = Skip(Str("</")).and(xmlName).skip(Ch('>')).surround(ignores)
+    val selfClosingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Str("/>")).surround(ignores)
+    val textContent =
+        NotChs('<').surround(comment.many0()).many1().map { XMLNode.Text(it.joinToString("").trim()) }
+
+    val xmlElement: Parser<XMLNode.Element> = OneOf(
+        openingTag.flatMap {
+            val name = it.result.first
+            val attrs = it.result.second
+            xmlNode.many0().and(closingTag).map { (content, closeName) ->
+                if (name != closeName) throw ParseException("Mismatched tags: <$name> and </$closeName>")
+                XMLNode.Element(name, attrs, content)
+            }
+        }.map { it.second },
+        selfClosingTag.map { XMLNode.Element(it.first, it.second, emptyList()) }
+    )
+
+    val xmlNode: Parser<XMLNode> = OneOf(xmlElement, textContent)
+
+    fun parse(input: String): XMLNode.Element = xmlElement.surround(ignores).end().eval(input)
 }
 
 class XMLParserTest {
     @Test
     fun test() {
-        println(XMLParser.Companion.xmlName.end().eval("tag1"))
-        println(XMLParser.Companion.attrValue.end().eval("'value1'"))
-        println(XMLParser.Companion.attribute.end().eval("key1='value1'"))
-        println(XMLParser.Companion.parse("<root></root>"))
+        println(XMLParser.xmlName.end().eval("tag1"))
+        println(XMLParser.attrValue.end().eval("'value1'"))
+        println(XMLParser.attribute.end().eval("key1='value1'"))
+        println(XMLParser.parse("<root></root>"))
 
         val xmlString = """
         <root attr1="value1" attr2='value2'>
@@ -66,7 +64,7 @@ class XMLParserTest {
             </child3>
         </root><!-- This is a comment -->
         """.trimIndent()
-        println(printXMLNode(XMLParser.Companion.parse(xmlString)))
+        println(printXMLNode(XMLParser.parse(xmlString)))
 
         println(printXMLNode(NaiveXMLParser().parse(xmlString)))
     }
@@ -76,7 +74,7 @@ class XMLParserTest {
         val xmlString = getResourceAsString("test.xml")
         val naive = NaiveXMLParser()
         val r1 = naive.parse(xmlString)
-        val r2 = XMLParser.Companion.parse(xmlString)
+        val r2 = XMLParser.parse(xmlString)
 
         assertEquals(printXMLNode(r1), printXMLNode(r2))
 
@@ -89,7 +87,7 @@ class XMLParserTest {
 
         val start2 = System.currentTimeMillis()
         (0 until 1000).forEach {
-            XMLParser.Companion.parse(xmlString)
+            XMLParser.parse(xmlString)
         }
         val end2 = System.currentTimeMillis()
         println("parserc: ${end2 - start2} ms")
