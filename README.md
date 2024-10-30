@@ -12,15 +12,24 @@ object ExprCalc {
     private val div = Ch('/').trim()
     private val lp = Ch('(').trim()
     private val rp = Ch(')').trim()
+    private val comma = Ch(',').trim()
 
     // const definition example: PI
     private val PI: Parser<Double> = Str("PI").map { Math.PI }.trim()
+
+    // function definition example: pow
+    private val POW: Parser<Double> = SkipAll(Str("pow"), lp)
+        .and(Lazy { number })
+        .skip(comma)
+        .and(Lazy { number })
+        .skip(rp)
+        .map { it.first.pow(it.second) }
     private val integer = Match("\\d+").map { it.toDouble() }
     private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
-    private val number = decimal.or(integer).or(PI).trim()
+    private val number = decimal.or(integer).trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
-    private val fact = OneOf(number, bracketExpr, negFact)
+    private val fact = OneOf(number, bracketExpr, negFact, PI, POW)
     private val term = fact.and(mul.or(div).and(fact).many0()).map(::calc)
     private val expr = term.and(add.or(sub).and(term).many0()).map(::calc)
 
