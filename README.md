@@ -17,19 +17,26 @@ object ExprCalc {
     // const definition example: PI
     private val PI: Parser<Double> = Str("PI").map { Math.PI }.trim()
 
-    // function definition example: pow
+    // function definition example: pow and log
     private val POW: Parser<Double> = SkipAll(Str("pow"), lp)
-        .and(Lazy { number })
+        .and(Lazy { fact })
         .skip(comma)
-        .and(Lazy { number })
+        .and(Lazy { fact })
         .skip(rp)
         .map { it.first.pow(it.second) }
+    private val LOG: Parser<Double> = SkipAll(Str("log"), lp)
+        .and(Lazy { fact })
+        .skip(comma)
+        .and(Lazy { fact })
+        .skip(rp)
+        .map { log(it.first, it.second) }
+
     private val integer = Match("\\d+").map { it.toDouble() }
     private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
     private val number = decimal.or(integer).trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
-    private val fact = OneOf(number, bracketExpr, negFact, PI, POW)
+    private val fact = OneOf(number, bracketExpr, negFact, PI, POW, LOG)
     private val term = fact.and(mul.or(div).and(fact).many0()).map(::calc)
     private val expr = term.and(add.or(sub).and(term).many0()).map(::calc)
 
