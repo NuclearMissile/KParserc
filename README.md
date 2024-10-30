@@ -13,9 +13,11 @@ object ExprCalc {
     private val lp = Ch('(').trim()
     private val rp = Ch(')').trim()
 
+    // const definition example: PI
+    private val PI: Parser<Double> = Str("PI").map { Math.PI }.trim()
     private val integer = Match("\\d+").map { it.toDouble() }
     private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
-    private val number = decimal.or(integer).trim()
+    private val number = decimal.or(integer).or(PI).trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
     private val fact = OneOf(number, bracketExpr, negFact)

@@ -13,9 +13,11 @@ object ExprCalc {
     private val lp = Ch('(').trim()
     private val rp = Ch(')').trim()
 
+    // const definition example: PI
+    private val PI: Parser<Double> = Str("PI").map { Math.PI }.trim()
     private val integer = Match("\\d+").map { it.toDouble() }
     private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
-    private val number = decimal.or(integer).trim()
+    private val number = decimal.or(integer).or(PI).trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
     private val fact = OneOf(number, bracketExpr, negFact)
@@ -58,6 +60,11 @@ class ExprCalcTest {
         assertEquals(
             77.58 * (6 / 3.14 + 55.2234) - 2 * 6.1 / (1.0 + 2 / (4.0 - 3.8 * 5)),
             ExprCalc.eval("77.58* ( 6 / 3.14+55.2234 ) -2 * 6.1/ ( 1.0+2/ (4.0-3.8*5))  ")
+        )
+        assertEquals(Math.PI, ExprCalc.eval("PI"))
+        assertEquals(
+            77.58 * (6 / 3.14 + 55.2234) / (-Math.PI) - 2 * 6.1 / (1.0 + 2 / (4.0 - 3.8 * 5)),
+            ExprCalc.eval("77.58* ( 6 / 3.14+55.2234 ) / (-PI) -2 * 6.1/ ( 1.0+2/ (4.0-3.8*5))  ")
         )
 
         assertThrows<ParseException> { ExprCalc.eval("") }
