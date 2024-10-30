@@ -1,6 +1,6 @@
-package org.example.kparserc.naive
+package org.example.kparserc.example.naive
 
-import org.example.kparserc.TestUtils.getResourceAsString
+import org.example.kparserc.TestUtils
 import org.example.kparserc.XMLNode
 import org.example.kparserc.printXMLNode
 import org.junit.jupiter.api.assertThrows
@@ -171,7 +171,7 @@ class NaiveXMLParserTest {
 
     @Test
     fun test2() {
-        val testXML = getResourceAsString("test.xml")
+        val testXML = TestUtils.getResourceAsString("test.xml")
         val parser = NaiveXMLParser()
         val rootNode = parser.parse(testXML)
         printXMLNode(rootNode)

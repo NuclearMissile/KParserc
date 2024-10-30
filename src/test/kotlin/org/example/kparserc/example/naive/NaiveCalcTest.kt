@@ -1,4 +1,4 @@
-package org.example.kparserc.naive
+package org.example.kparserc.example.naive
 
 import kotlin.math.ln
 import kotlin.math.pow

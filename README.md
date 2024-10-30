@@ -125,25 +125,24 @@ object XMLParser {
         }
         ret
     }
-    val openingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Ch('>')).surround(ignores)
-    val closingTag = Skip(Str("</")).and(xmlName).skip(Ch('>')).surround(ignores)
-    val selfClosingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Str("/>")).surround(ignores)
-    val textContent =
-        NotChs('<').surround(comment.many0()).many1().map { XMLNode.Text(it.joinToString("").trim()) }
+    val openTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Ch('>')).surround(ignores)
+    val closeTag = Skip(Str("</")).and(xmlName).skip(Ch('>')).surround(ignores)
+    val selfCloseTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Str("/>")).surround(ignores)
+    val text = NotChs('<').surround(comment.many0()).many1().map { XMLNode.Text(it.joinToString("").trim()) }
 
     val xmlElement: Parser<XMLNode.Element> = OneOf(
-        openingTag.flatMap {
+        openTag.flatMap {
             val name = it.result.first
             val attrs = it.result.second
-            xmlNode.many0().and(closingTag).map { (content, closeName) ->
+            xmlNode.many0().and(closeTag).map { (children, closeName) ->
                 if (name != closeName) throw ParseException("Mismatched tags: <$name> and </$closeName>")
-                XMLNode.Element(name, attrs, content)
+                XMLNode.Element(name, attrs, children)
             }
         }.map { it.second },
-        selfClosingTag.map { XMLNode.Element(it.first, it.second, emptyList()) }
+        selfCloseTag.map { XMLNode.Element(it.first, it.second, emptyList()) }
     )
 
-    val xmlNode: Parser<XMLNode> = OneOf(xmlElement, textContent)
+    val xmlNode: Parser<XMLNode> = OneOf(xmlElement, text)
 
     fun parse(input: String): XMLNode.Element = xmlElement.surround(ignores).end().eval(input)
 }

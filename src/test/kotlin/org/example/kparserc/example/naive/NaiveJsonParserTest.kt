@@ -1,4 +1,4 @@
-package org.example.kparserc.naive
+package org.example.kparserc.example.naive
 
 import org.junit.jupiter.api.Test
 

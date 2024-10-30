@@ -1,7 +1,7 @@
-package org.example.kparserc
+package org.example.kparserc.example
 
-import org.example.kparserc.TestUtils.getResourceAsString
-import org.example.kparserc.naive.NaiveJsonParser
+import org.example.kparserc.*
+import org.example.kparserc.example.naive.NaiveJsonParser
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -148,7 +148,7 @@ class JsonParserTest {
 
     @Test
     fun test2() {
-        val jsonString = getResourceAsString("test.json")
+        val jsonString = TestUtils.getResourceAsString("test.json")
         val naive = NaiveJsonParser()
         val m1 = naive.parse(jsonString)
         val m2 = JsonParser.parse(jsonString)

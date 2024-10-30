@@ -1,5 +1,6 @@
-package org.example.kparserc
+package org.example.kparserc.example
 
+import org.example.kparserc.*
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals

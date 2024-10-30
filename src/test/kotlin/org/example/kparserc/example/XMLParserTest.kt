@@ -1,7 +1,8 @@
-package org.example.kparserc
+package org.example.kparserc.example
 
-import org.example.kparserc.TestUtils.getResourceAsString
-import org.example.kparserc.naive.NaiveXMLParser
+import org.example.kparserc.*
+import org.example.kparserc.example.naive.NaiveXMLParser
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.text.trim
@@ -23,25 +24,24 @@ object XMLParser {
         }
         ret
     }
-    val openingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Ch('>')).surround(ignores)
-    val closingTag = Skip(Str("</")).and(xmlName).skip(Ch('>')).surround(ignores)
-    val selfClosingTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Str("/>")).surround(ignores)
-    val textContent =
-        NotChs('<').surround(comment.many0()).many1().map { XMLNode.Text(it.joinToString("").trim()) }
+    val openTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Ch('>')).surround(ignores)
+    val closeTag = Skip(Str("</")).and(xmlName).skip(Ch('>')).surround(ignores)
+    val selfCloseTag = Skip(Ch('<')).and(xmlName).and(attributes).skip(Str("/>")).surround(ignores)
+    val text = NotChs('<').surround(comment.many0()).many1().map { XMLNode.Text(it.joinToString("").trim()) }
 
     val xmlElement: Parser<XMLNode.Element> = OneOf(
-        openingTag.flatMap {
+        openTag.flatMap {
             val name = it.result.first
             val attrs = it.result.second
-            xmlNode.many0().and(closingTag).map { (content, closeName) ->
+            xmlNode.many0().and(closeTag).map { (children, closeName) ->
                 if (name != closeName) throw ParseException("Mismatched tags: <$name> and </$closeName>")
-                XMLNode.Element(name, attrs, content)
+                XMLNode.Element(name, attrs, children)
             }
         }.map { it.second },
-        selfClosingTag.map { XMLNode.Element(it.first, it.second, emptyList()) }
+        selfCloseTag.map { XMLNode.Element(it.first, it.second, emptyList()) }
     )
 
-    val xmlNode: Parser<XMLNode> = OneOf(xmlElement, textContent)
+    val xmlNode: Parser<XMLNode> = OneOf(xmlElement, text)
 
     fun parse(input: String): XMLNode.Element = xmlElement.surround(ignores).end().eval(input)
 }
@@ -52,7 +52,11 @@ class XMLParserTest {
         println(XMLParser.xmlName.end().eval("tag1"))
         println(XMLParser.attrValue.end().eval("'value1'"))
         println(XMLParser.attribute.end().eval("key1='value1'"))
+        println(XMLParser.attribute.end().eval("key2=\"value2\""))
         println(XMLParser.parse("<root></root>"))
+
+        assertThrows<ParseException> { XMLParser.parse("<root attr1='a' attr1='b'></root>") }
+        assertThrows<ParseException> { XMLParser.parse("<root></ROOT>") }
 
         val xmlString = """
         <root attr1="value1" attr2='value2'>
@@ -60,7 +64,10 @@ class XMLParserTest {
             <child1>Text content</child1> <!-- This is a comment -->
             <child2 attr3='value3'/> <!-- This is a comment -->
             <child3>
-                <grandchild><!-- This is a comment -->N<!-- This is a comment -->ested<!-- This is a comment --> <!-- This is a comment -->content<!-- This is a comment --></grandchild>
+                <grandchild>
+                    <!-- This is a comment -->N<!-- This is a comment -->ested<!-- This is a comment --> 
+                    <!-- This is a comment -->content<!-- This is a comment -->
+                </grandchild>
             </child3>
         </root><!-- This is a comment -->
         """.trimIndent()
@@ -71,7 +78,7 @@ class XMLParserTest {
 
     @Test
     fun test1() {
-        val xmlString = getResourceAsString("test.xml")
+        val xmlString = TestUtils.getResourceAsString("test.xml")
         val naive = NaiveXMLParser()
         val r1 = naive.parse(xmlString)
         val r2 = XMLParser.parse(xmlString)
