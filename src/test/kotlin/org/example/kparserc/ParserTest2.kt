@@ -293,6 +293,22 @@ class ParserTest2 {
     }
 
     @Test
+    fun testMany() {
+        val p = Ch('a').many(1, 3)
+        assertThrows<InternalParseException> { p.eval("") }
+        assertThrows<InternalParseException> { p.eval("b") }
+        assertEquals(listOf('a'), p.eval("a"))
+        assertEquals(listOf('a', 'a'), p.eval("aa"))
+        assertEquals(listOf('a', 'a', 'a'), p.eval("aaa"))
+        assertEquals(listOf('a', 'a', 'a'), p.eval("aaab"))
+
+        val p2 = Ch('a').many(1)
+        assertThrows<InternalParseException> { p2.eval("") }
+        assertEquals(listOf('a'), p2.eval("a"))
+        assertEquals(listOf('a'), p2.eval("aa"))
+    }
+
+    @Test
     fun testMany0() {
         val p = Ch('a').many0()
         val r3 = p.eval("")
@@ -394,6 +410,13 @@ class ParserTest2 {
     }
 
     @Test
+    fun testSkipAll() {
+        val p = Ch('a').skipAll(Ch('b'), Ch('c'))
+        assertEquals('a', p.eval("abc"))
+        assertThrows<InternalParseException> { p.eval("cba") }
+    }
+
+    @Test
     fun testExpect() {
         val p = Expect(Str("xy"), 123)
         val r = p.eval("xyz")
@@ -422,7 +445,13 @@ class ParserTest2 {
     @Test
     fun testFatal() {
         val p = Ch('a').fatal { s, index -> ParseException("msg_fatal", s, index) }
-        val e = assertThrows<ParseException> { p.eval("bcd") }
-        assertTrue(e.message.contains("msg_fatal"))
+        assertThrows<ParseException>("msg_fatal") { p.eval("bcd") }
+    }
+
+    @Test
+    fun testWithExpect() {
+        val p = Ch('a').withExpect("'a' expected.")
+        assertEquals('a', p.eval("ab"))
+        assertThrows<ParseException>("'a' expected.") { p.eval("ba") }
     }
 }
