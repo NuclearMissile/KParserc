@@ -1,6 +1,6 @@
 package org.example.kparserc.example.naive
 
-import kotlin.math.ln
+import kotlin.math.log
 import kotlin.math.pow
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -152,7 +152,7 @@ class NaiveCalcTest {
                 args[0].pow(args[1])
             }.registerFunction("log") { args ->
                 if (args.size != 2) throw IllegalArgumentException("log expects 2 arguments")
-                ln(args[0]) / ln(args[1])
+                log(args[0], args[1])
             }
         assertEquals(16.0, calculator.calculate("2 ^3 + pow(2,3)"))
     }
