@@ -67,13 +67,8 @@ object JsonParser {
     private val colon = Ch(':').trim()
     private val comma = Ch(',').trim()
     private val jsonObj = OneOf(
-        Lazy { decimal },
-        Lazy { integer },
-        Lazy { string },
-        Lazy { boolean },
-        Lazy { _null },
-        Lazy { arr },
-        Lazy { obj },
+        Lazy { decimal }, Lazy { integer }, Lazy { string }, Lazy { boolLiteral }, Lazy { nullLiteral },
+        Lazy { arr }, Lazy { obj },
     )
 
     private val integer = Match("[+\\-]?\\d+").map { it.toInt() }.trim()
@@ -107,8 +102,8 @@ object JsonParser {
         }
         sb.toString()
     }.trim()
-    private val boolean = Strs("true", "false").map { it.toBoolean() }.trim()
-    private val _null = Str("null").map { null }.trim()
+    private val boolLiteral = Strs("true", "false").map { it.toBoolean() }.trim()
+    private val nullLiteral = Str("null").map { null }.trim()
     private val objList = jsonObj.and(Skip(comma).and(jsonObj).many0()).map(::reduceList)
     private val arr: Parser<List<Any?>> = Skip(arrStart).and(objList.opt(emptyList())).skip(arrEnd)
     private val pair = string.skip(colon).and(jsonObj)

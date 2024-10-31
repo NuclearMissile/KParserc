@@ -2,6 +2,7 @@ package org.example.kparserc
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -445,13 +446,15 @@ class ParserTest2 {
     @Test
     fun testFatal() {
         val p = Ch('a').fatal { s, index -> ParseException("msg_fatal", s, index) }
-        assertThrows<ParseException>("msg_fatal") { p.eval("bcd") }
+        val e = assertThrows<ParseException> { p.eval("bcd") }
+        assertContains(e.message, "msg_fatal")
     }
 
     @Test
     fun testWithExpect() {
         val p = Ch('a').withExpect("'a' expected.")
         assertEquals('a', p.eval("ab"))
-        assertThrows<ParseException>("'a' expected.") { p.eval("ba") }
+        val e = assertThrows<ParseException> { p.eval("ba") }
+        assertContains(e.message, "'a' expected.")
     }
 }
