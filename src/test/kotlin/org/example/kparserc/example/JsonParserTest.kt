@@ -21,7 +21,7 @@ object JsonParser {
 
     private val integer = Match("[+\\-]?\\d+").map { it.toInt() }.trim()
     private val decimal = Match("[+\\-]?\\d*\\.\\d+([eE][+-]?[0-9]+)?").map { it.toDouble() }.trim()
-    private val string = Match("\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"").map { s ->
+    private val string = Match("\"([^\"\\\\]*|\\\\[\"\\\\bfnrt\\/]|\\\\u[0-9a-f]{4})*\"").map { s ->
         val sb = StringBuilder()
         var currIndex = 1
         while (s[currIndex] != '"') {
