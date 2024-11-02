@@ -31,9 +31,7 @@ object ExprCalc {
         .skip(rp)
         .map { log(it.first, it.second) }
 
-    private val integer = Match("\\d+").map { it.toDouble() }
-    private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
-    private val number = decimal.or(integer).trim()
+    private val number = Match("(\\d*\\.\\d+)|(\\d+)").map { it.toDouble() }.trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
     private val fact = OneOf(number, bracketExpr, negFact, PI, POW, LOG)

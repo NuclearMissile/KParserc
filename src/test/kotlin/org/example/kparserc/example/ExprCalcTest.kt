@@ -33,9 +33,7 @@ object ExprCalc {
         .skip(rp)
         .map { log(it.first, it.second) }
 
-    private val integer = Match("\\d+").map { it.toDouble() }
-    private val decimal = Match("\\d*\\.\\d+").map { it.toDouble() }
-    private val number = decimal.or(integer).trim()
+    private val number = Match("(\\d*\\.\\d+)|(\\d+)").map { it.toDouble() }.trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
     private val fact = OneOf(number, bracketExpr, negFact, PI, POW, LOG)
@@ -69,7 +67,7 @@ class ExprCalcTest {
         assertEquals(2.0 + 3.0, ExprCalc.eval("2 + 3"))
         assertEquals(5.2 - 7.56, ExprCalc.eval("5.2-7.56"))
         assertEquals(123.456 * 67.89, ExprCalc.eval("123.456*67.89"))
-        assertEquals(0.78 / 10.4, ExprCalc.eval(" 0.78 / 10.4 "))
+        assertEquals(0.78 / 10.4, ExprCalc.eval(" .78 / 10.4 "))
         assertEquals((2.0 + 3) * (7 - 4.0), ExprCalc.eval("(2+3)*(7-4)"))
         assertEquals(
             2.4 / 5.774 * (6 / 3.57 + 6.37) - 2 * 7 / 5.2 + 5,
