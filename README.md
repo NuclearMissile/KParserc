@@ -19,15 +19,15 @@ object ExprCalc {
 
     // function definition example: pow and log
     private val POW: Parser<Double> = SkipAll(Str("pow"), lp)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(comma)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(rp)
         .map { it.first.pow(it.second) }
     private val LOG: Parser<Double> = SkipAll(Str("log"), lp)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(comma)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(rp)
         .map { log(it.first, it.second) }
 

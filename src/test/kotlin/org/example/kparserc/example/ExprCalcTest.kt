@@ -21,15 +21,15 @@ object ExprCalc {
 
     // function definition example: pow and log
     private val POW: Parser<Double> = SkipAll(Str("pow"), lp)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(comma)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(rp)
         .map { it.first.pow(it.second) }
     private val LOG: Parser<Double> = SkipAll(Str("log"), lp)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(comma)
-        .and(Lazy { fact })
+        .and(Lazy { expr })
         .skip(rp)
         .map { log(it.first, it.second) }
 
@@ -83,7 +83,7 @@ class ExprCalcTest {
             ExprCalc.eval("77.58* ( 6 / 3.14+55.2234 ) / (-PI) -2 * 6.1/ ( 1.0+2/ (4.0-3.8*5))  ")
         )
         assertEquals(2.0.pow(3.0) * 10 / Math.PI, ExprCalc.eval("pow(2, 3) * 10 / PI"))
-        assertEquals(log(2.0.pow(3.0), 3.0), ExprCalc.eval("log(pow(2, 3), 3)"))
+        assertEquals(log(3 * (2.0.pow(3.0) + 3.0), 3.0), ExprCalc.eval("log(3 * (pow(2, 3) + 3), 3)"))
 
         assertThrows<ParseException> { ExprCalc.eval("") }
         assertThrows<ParseException> { ExprCalc.eval("abc") }
