@@ -14,10 +14,11 @@ object ExprCalc {
     private val rp = Ch(')').trim()
     private val comma = Ch(',').trim()
 
-    // const definition example: PI
-    private val PI: Parser<Double> = Str("PI").map { Math.PI }.trim()
+    // const definition example
+    private val PI: Parser<Double> = Str("PI").value(Math.PI).trim()
+    private val E: Parser<Double> = Str("E").value(Math.E).trim()
 
-    // function definition example: pow and log
+    // function definition example
     private val POW: Parser<Double> = SkipAll(Str("pow"), lp)
         .and(Lazy { expr })
         .skip(comma)
@@ -30,11 +31,20 @@ object ExprCalc {
         .and(Lazy { expr })
         .skip(rp)
         .map { log(it.first, it.second) }
+    private val MAX_MIN: Parser<Double> = Strs("max", "min").skip(lp)
+        .and(Lazy { expr }.and(Skip(comma).and(Lazy { expr }).many0()))
+        .skip(rp)
+        .map {
+            if (it.first == "max")
+                maxOf(it.second.first, *it.second.second.toTypedArray())
+            else
+                minOf(it.second.first, *it.second.second.toTypedArray())
+        }
 
     private val number = Match("(\\d*\\.\\d+)|(\\d+)").map { it.toDouble() }.trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
-    private val fact = OneOf(number, bracketExpr, negFact, PI, POW, LOG)
+    private val fact = OneOf(number, bracketExpr, negFact, PI, E, POW, LOG, MAX_MIN)
     private val term = fact.and(mul.or(div).and(fact).many0()).map(::calc)
     private val expr = term.and(add.or(sub).and(term).many0()).map(::calc)
 
