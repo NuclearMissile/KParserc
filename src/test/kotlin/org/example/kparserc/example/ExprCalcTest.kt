@@ -15,10 +15,11 @@ object ExprCalc {
     private val lp = Ch('(').trim()
     private val rp = Ch(')').trim()
     private val comma = Ch(',').trim()
+    private val number = Match("(\\d*\\.\\d+)|(\\d+)").map { it.toDouble() }.trim()
 
     // const definition example
-    private val PI: Parser<Double> = Str("PI").value(Math.PI).trim()
-    private val E: Parser<Double> = Str("E").value(Math.E).trim()
+    private val consts = mapOf("PI" to Math.PI, "E" to Math.E)
+    private val CONSTS = Strs(*consts.keys.toTypedArray()).map { consts[it]!! }.trim()
 
     // function definition example
     private val POW: Parser<Double> = SkipAll(Str("pow"), lp)
@@ -27,12 +28,14 @@ object ExprCalc {
         .and(Lazy { expr })
         .skip(rp)
         .map { it.first.pow(it.second) }
+        .trim()
     private val LOG: Parser<Double> = SkipAll(Str("log"), lp)
         .and(Lazy { expr })
         .skip(comma)
         .and(Lazy { expr })
         .skip(rp)
         .map { log(it.first, it.second) }
+        .trim()
     private val MAX_MIN: Parser<Double> = Strs("max", "min").skip(lp)
         .and(Lazy { expr }.and(Skip(comma).and(Lazy { expr }).many0()))
         .skip(rp)
@@ -41,12 +44,11 @@ object ExprCalc {
                 maxOf(it.second.first, *it.second.second.toTypedArray())
             else
                 minOf(it.second.first, *it.second.second.toTypedArray())
-        }
+        }.trim()
 
-    private val number = Match("(\\d*\\.\\d+)|(\\d+)").map { it.toDouble() }.trim()
     private val bracketExpr: Parser<Double> = Skip(lp).and(Lazy { expr }).skip(rp)
     private val negFact: Parser<Double> = Skip(sub).and(Lazy { fact }).map { -it }
-    private val fact = OneOf(number, bracketExpr, negFact, PI, E, POW, LOG, MAX_MIN)
+    private val fact = OneOf(number, bracketExpr, negFact, CONSTS, POW, LOG, MAX_MIN)
     private val term = fact.and(mul.or(div).and(fact).many0()).map(::calc)
     private val expr = term.and(add.or(sub).and(term).many0()).map(::calc)
 
