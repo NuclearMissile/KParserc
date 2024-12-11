@@ -4,6 +4,10 @@
 
 - *Example: expr calculator*
 
+<details>
+
+<summary>Code</summary>
+
 ```kotlin
 object ExprCalc {
     private val add = Ch('+').trim()
@@ -66,7 +70,13 @@ object ExprCalc {
 }
 ```
 
+</details>
+
 - *Example: JSON parser*
+
+<details>
+
+<summary>Code</summary>
 
 ```kotlin
 object JsonParser {
@@ -128,7 +138,13 @@ object JsonParser {
 }
 ```
 
+</details>
+
 - *Example: XML parser*
+
+<details>
+
+<summary>Code</summary>
 
 ```kotlin
 object XMLParser {
@@ -170,3 +186,5 @@ object XMLParser {
     fun parse(input: String): XMLNode.Element = xmlElement.surround(ignores).end().eval(input)
 }
 ```
+
+</details>
