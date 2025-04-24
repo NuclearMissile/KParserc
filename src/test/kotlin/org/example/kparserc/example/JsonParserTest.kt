@@ -83,7 +83,7 @@ class JsonParserTest {
 
         val json = """
             {
-                "escaped": "\ttest\u1234\ntest",
+                "escaped": "\ttest\u1234\uAAAA\ntest",
                 "null": null,
                 "a": +123,
                 "b": -3.14e-1,
@@ -108,7 +108,7 @@ class JsonParserTest {
             }
             """
         val map = mapOf(
-            "escaped" to "\ttest\u1234\ntest",
+            "escaped" to "\ttest\u1234\uAAAA\ntest",
             "null" to null,
             "a" to 123,
             "b" to -0.314,
