@@ -19,9 +19,9 @@ object JsonParser {
         Lazy { arr }, Lazy { obj },
     )
 
-    private val integer = Match("[+\\-]?\\d+").map { it.toInt() }.trim()
-    private val decimal = Match("[+\\-]?\\d*\\.\\d+([eE][+-]?[0-9]+)?").map { it.toDouble() }.trim()
-    private val string = Match("\"([^\"\\\\]*|\\\\[\"\\\\bfnrt\\/]|\\\\u[0-9a-f]{4})*\"").map { s ->
+    private val integer = Match("""[+-]?\d+""").map { it.toInt() }.trim()
+    private val decimal = Match("""[+-]?\d*\.\d+([eE][+-]?[0-9]+)?""").map { it.toDouble() }.trim()
+    private val string = Match(""""([^"\x00-\x1F\x7F\\]|\\[\\"bfnrt]|\\u[a-fA-F0-9]{4})*"""").map { s ->
         val sb = StringBuilder()
         var currIndex = 1
         while (s[currIndex] != '"') {

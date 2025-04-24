@@ -12,8 +12,8 @@ object XMLParser {
     val comment = Skip(Str("<!--")).and(Not(Str("-->")).and(AnyCh()).many0()).skip(Str("-->"))
     val ignores = Alt(WhiteSpace(), comment).many0()
 
-    val xmlName = Match("[a-zA-Z_][a-zA-Z-_:\\d]*")
-    val attrValue = Match("('[^']+')|(\"[^\"]+\")").map { it.trim('\'', '"') }
+    val xmlName = Match("""[a-zA-Z_][a-zA-Z-_:\d]*""")
+    val attrValue = Match("""('[^']+')|("[^"]+")""").map { it.trim('\'', '"') }
     val attribute = xmlName.trim().skip(Ch('=')).and(attrValue.trim())
     val attributes = attribute.many0().map {
         val ret = mutableMapOf<String, String>()

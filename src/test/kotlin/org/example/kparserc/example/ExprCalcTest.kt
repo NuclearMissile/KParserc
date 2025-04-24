@@ -15,7 +15,7 @@ object ExprCalc {
     private val lp = Ch('(').trim()
     private val rp = Ch(')').trim()
     private val comma = Ch(',').trim()
-    private val number = Match("(\\d*\\.\\d+)|(\\d+)").map { it.toDouble() }.trim()
+    private val number = Match("""(\d*\.\d+)|(\d+)""").map { it.toDouble() }.trim()
 
     // const definition example
     private val consts = mapOf("PI" to Math.PI, "E" to Math.E)
